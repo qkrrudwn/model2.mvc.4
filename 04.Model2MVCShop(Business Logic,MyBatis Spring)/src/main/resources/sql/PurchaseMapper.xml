@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurchaseMapper">
+ 	
+ 			<!--  purchase필드 -->			<!-- db의 컬럼명 -->                 <!-- db의 데이터 타입 -->
+	<resultMap id="purchaseSelectMap" type="purchase"> 
+		<result property="buyer.userId" 				column="BUYER_ID" 					jdbcType="VARCHAR"/>
+		<result property="tranNo" 				column="TRAN_NO" 					jdbcType="INTEGER"/>
+		<result property="purchaseProd.prodNo" 		column="PROD_NO" 					jdbcType="INTEGER"/>
+		<result property="paymentOption" 		column="PAYMENT_OPTION" 	        jdbcType="CHAR" />
+		<result property="receiverName" 		column="RECEIVER_NAME" 		        jdbcType="VARCHAR" />
+		<result property="receiverPhone" 		column="RECEIVER_PHONE" 		    jdbcType="VARCHAR" />
+		<result property="divyAddr" 		    column="DEMAILADDR" 		        jdbcType="VARCHAR" />
+		<result property="divyRequest" 		    column="DLVY_REQUEST" 		        jdbcType="VARCHAR" />
+		<result property="tranCode" 		    column="TRAN_STATUS_CODE" 		    jdbcType="CHAR" />
+		<result property="orderDate" 		    column="ORDER_DATA" 		        jdbcType="DATE" />
+		<result property="divyDate" 		    column="DLVY_DATE" 		        	jdbcType="DATE" />
+	</resultMap>
+	
+	 
+	<insert 	id="addPurchase"		parameterType="purchase" >   <!-- sql쿼리문 -->
+	 	INSERT                 											
+		INTO transaction( BUYER_ID, TRAN_NO , PROD_NO, PAYMENT_OPTION , RECEIVER_NAME , RECEIVER_PHONE , DEMAILADDR,  DLVY_REQUEST , TRAN_STATUS_CODE, ORDER_DATA, DLVY_DATE) <!-- 테이블컬럼병 -->
+		VALUES	 ( #{buyer.userId}, seq_transaction_tran_no.nextval , #{purchaseProd.prodNo} , #{paymentOption} , #{receiverName} ,  #{receiverPhone} , #{divyAddr} , #{divyRequest} , #{tranCode} , SYSDATE , #{divyDate} )
+	 </insert>
+	  
+	  <!-- sql쿼리문 -->
+	 <select 	id="getPurchase"	parameterType="string"	resultMap="purchaseSelectMap">
+		SELECT
+		* 	<!-- 테이블컬럼병 -->
+		FROM transaction 
+		WHERE PROD_NO = #{value}
+	 </select>
+	   <!-- sql쿼리문 -->
+	  
+	 <update	id="updatePurchase"	parameterType="purchase" >
+	   	UPDATE transaction
+	   	<set>
+	   		PAYMENT_OPTION 	= #{paymentOption} ,
+			RECEIVER_NAME	= #{receiverName},
+			RECEIVER_PHONE = #{receiverPhone} ,
+			DEMAILADDR  =	#{divyAddr} ,
+			DLVY_REQUEST   =   #{divyRequest} ,
+			DLVY_DATE   =   #{divyDate} 
+	   	</set>
+	   	WHERE PROD_NO = #{purchaseProd.prodNo}
+	 </update>
+		   <!-- sql쿼리문 -->
+		   
+	  <update	id="updateTrancode"	parameterType="purchase" >
+	   	UPDATE transaction
+	   	<set>
+	   		TRAN_STATUS_CODE 	= #{tranCode} + 1
+
+	   	</set>
+	   	WHERE PROD_NO = #{purchaseProd.prodNo}
+	 </update>
+	 
+	<select  id="getPurchaseList"  parameterType="map"	resultMap="purchaseSelectMap">
+	  	SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  					FROM		(	select * from TRANSACTION where buyer_id = #{buyerId}  ) inner_table
+						WHERE ROWNUM &lt;= #{search.endRowNum} )
+		WHERE row_seq BETWEEN #{search.startRowNum} AND #{search.endRowNum} 
+	 </select>																		
+	 	    <!-- sql쿼리문 -->
+	 <select  id="getTotalCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM(select product.* , transaction.tran_status_code from product join transaction on product.prod_no = transaction.prod_no (+)) countTable						
+	 </select>
+ 
+</mapper>

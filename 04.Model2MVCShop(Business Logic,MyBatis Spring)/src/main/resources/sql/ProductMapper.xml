@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ProductMapper">
+ 	
+ 	
+	<resultMap id="productSelectMap" type="product"> <!--  테이블 컬럼명 -->
+		<result property="fileName" 			column="IMAGE_FILE" 			jdbcType="VARCHAR"/>
+		<result property="manuDate"	column="MANUFACTURE_DAY" 		jdbcType="VARCHAR" />
+		<result property="price" 	column="PRICE" 		jdbcType="NUMERIC" />
+		<result property="prodDetail" 		column="PROD_DETAIL" 	jdbcType="VARCHAR" />
+		<result property="prodName" 		column="PROD_NAME" 		jdbcType="VARCHAR" />
+		<result property="prodNo" 			column="PROD_NO" 		jdbcType="NUMERIC" />
+		<result property="regDate" 		column="REG_DATE" 		jdbcType="DATE" />
+	</resultMap><!--  product필드 -->
+	
+	 
+	<insert 	id="addProduct"		parameterType="product" >
+	 	INSERT                 											
+		INTO product( IMAGE_FILE , MANUFACTURE_DAY , PRICE , PROD_DETAIL , PROD_NAME,  PROD_NO , REG_DATE) <!-- 테이블컬럼병 -->
+		VALUES	 (	#{fileName} , #{manuDate} , #{price} ,  #{prodDetail} , 
+							#{prodName:VARCHAR} , #{prodNo:VARCHAR} , SYSDATE )
+	 </insert>
+	  
+	
+	 <select 	id="getProduct"	parameterType="string"	resultMap="productSelectMap">
+		SELECT
+		IMAGE_FILE , MANUFACTURE_DAY , PRICE , PROD_DETAIL ,  PROD_NAME ,  PROD_NO , REG_DATE 	<!-- 테이블컬럼병 -->
+		FROM product 
+		WHERE PROD_NO = #{value}
+	 </select>
+	 
+	  
+	 <update	id="updateProduct"	parameterType="product" >
+	   	UPDATE product
+	   	<set>
+	   		PROD_NAME 	= #{prodName} ,
+			PROD_DETAIL	= #{prodDetail},
+			MANUFACTURE_DAY 				= #{manuDate} ,
+			PRICE				=	#{price} ,
+			IMAGE_FILE      =   #{fileName}
+	   	</set>
+	   	WHERE PROD_NO = #{prodNo}
+	 </update>
+		 
+	 
+	<select  id="getProductList"  parameterType="search"	resultMap="productSelectMap">
+	  	SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  					FROM		(	select product.* , transaction.tran_status_code from product join transaction on product.prod_no = transaction.prod_no (+)
+											<if test="searchCondition != null">
+												<where>
+													<if test="searchCondition == 0 and searchKeyword !='' ">
+										 				product.PROD_NO = #{searchKeyword}
+													</if>
+													<if test="searchCondition == 1 and searchKeyword !='' ">
+										 				product.PROD_NAME = #{searchKeyword}
+													</if>
+													<if test="searchCondition == 2 and searchKeyword !='' ">
+										 				product.PRICE = #{searchKeyword}
+													</if>
+												</where>
+											</if>
+											ORDER BY PROD_NAME ) inner_table
+						WHERE ROWNUM &lt;= #{endRowNum} )
+		WHERE row_seq BETWEEN #{startRowNum} AND #{endRowNum} 
+	 </select>																		
+	 	  
+	 <select  id="getTotalCount"  parameterType="search"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM(SELECT PROD_NO , PROD_NAME , PRICE , REG_DATE 
+											FROM product
+											<if test="searchCondition != null">
+												<where>
+													<if test="searchCondition == 0 and searchKeyword !='' ">
+										 				PROD_NO = #{searchKeyword}
+													</if>
+													<if test="searchCondition == 1 and searchKeyword !='' ">
+										 				PROD_NAME = #{searchKeyword}
+													</if>
+													<if test="searchCondition == 2 and searchKeyword !='' ">
+										 				PRICE = #{searchKeyword}
+													</if>
+												</where>
+											</if>
+											ORDER BY PROD_NO) countTable						
+	 </select>
+ 
+</mapper>
